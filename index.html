@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SMART-FLOW Einsparungsrechner</title>
+<style>
+:root{--navy:#0a4674;--blue:#147ab5;--green:#76b82a;--red:#c61a27;--pale:#f2f7fa;--line:#d4e2ec}
+*{box-sizing:border-box}
+body{margin:0;padding:18px 12px;background:#f4f7f9;color:var(--navy);font:15px/1.45 Arial,sans-serif}
+.wrap{max-width:850px;margin:auto;background:#fff;border:1px solid var(--line);border-radius:18px;padding:clamp(18px,3.5vw,34px);box-shadow:0 8px 28px rgba(10,70,116,.08)}
+.logo{display:block;width:90px;height:auto;margin:0 0 6px}
+.kicker{color:var(--green);font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-size:11px}
+h1{font-size:clamp(22px,4vw,32px);line-height:1.15;margin:6px 0 8px;color:var(--navy)}
+.intro{margin:0 0 18px;color:#3d5a70;font-size:14px}
+.results{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:0 0 20px}
+@media(min-width:660px){.results{grid-template-columns:repeat(4,1fr);gap:12px}}
+.result{padding:14px;border-radius:12px;background:var(--pale);border:1px solid var(--line)}
+.result.highlight{background:#f4faec;border-color:#c6e5a3}
+.result .label{font-size:12px;color:#496274;line-height:1.25}
+.result strong{display:block;font-size:clamp(20px,3.5vw,26px);line-height:1.2;margin:5px 0;color:var(--green)}
+.result small{display:block;font-size:11.5px;color:#496274;line-height:1.3}
+.inputs{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px}
+.field{background:#fafcfd;padding:12px;border-radius:12px;border:1px solid var(--line)}
+.field label{display:block;font-weight:700;font-size:13.5px;margin-bottom:6px;color:var(--navy)}
+.field input[type=range]{width:100%;height:26px;accent-color:var(--blue);cursor:pointer}
+.field select,.field .price{width:100%;padding:10px;border:1px solid var(--line);border-radius:9px;background:#fff;color:var(--navy);font:inherit;font-weight:700}
+.value{display:flex;justify-content:space-between;gap:10px;align-items:center}
+.value output{font-weight:700;color:var(--blue);font-size:17px}
+.hint{font-size:11.5px;color:#5b7588;margin-top:4px}
+.note{font-size:11.5px;color:#5b7588;margin:18px 0 0;border-top:1px solid var(--line);padding-top:14px}
+.reset{margin-top:16px;border:1px solid var(--line);border-radius:10px;padding:10px 16px;background:var(--pale);color:var(--navy);font-weight:700;font-size:13px;cursor:pointer}
+.reset:hover{background:#e1edf4}
+.hidden{display:none}
+.price-wrap{position:relative}.field .price{padding-right:32px}.price-wrap span{position:absolute;right:12px;top:50%;transform:translateY(-50%);color:#496274;font-weight:700;pointer-events:none}
+.info-field{position:relative}.label-row{display:flex;align-items:center;gap:6px}.label-row label{margin-bottom:0}.info-field .value{margin-bottom:6px}
+.info-btn{border:0;background:none;padding:0 2px;font-size:16px;line-height:1;color:var(--blue);cursor:pointer}
+.info-pop{position:absolute;z-index:10;top:34px;left:0;width:min(320px,calc(100vw - 48px));background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 28px rgba(10,70,116,.18);padding:14px 32px 14px 14px;font-size:13px;line-height:1.45;color:var(--navy)}
+.info-pop[hidden]{display:none}.info-pop p{margin:0 0 8px}.info-pop p:last-child{margin-bottom:0}
+.info-close{position:absolute;top:6px;right:8px;border:0;background:none;font-size:20px;color:#496274;cursor:pointer}
+</style>
+</head>
+<body><main class="wrap">
+<img class="logo" src="https://netlify.app" alt="SMART-FLOW Logo" width="90" height="90">
+<div class="kicker">Smart-Flow Energy · Einsparungsrechner</div>
+<h1>Wie viel können Sie einsparen?</h1>
+<p class="intro">Passen Sie die Werte an Ihren Haushalt an. Der Rechner zeigt Ihre jährliche Wasser-, Energie-, CO₂- und Kostenersparnis.</p>
+<section class="results" aria-live="polite">
+<div class="result highlight"><div class="label">Kostenersparnis / Jahr</div><strong id="cost">88,91 €</strong><small id="costDetail">bei 0,30 €/kWh</small></div>
+<div class="result"><div class="label">Wasserersparnis / Jahr</div><strong id="litres">7.300 Liter</strong><small id="m3">Das entspricht 7,30 m³</small></div>
+<div class="result"><div class="label">Energieersparnis / Jahr</div><strong id="energy">296,38 kWh</strong><small>Wärmeenergie am Hahn</small></div>
+<div class="result"><div class="label">CO₂-Einsparung / Jahr</div><strong id="co2">102,0 kg</strong><small id="co2Detail">bei deutschem Strommix 2025</small></div>
+</section>
+<section class="inputs">
+<div class="field">
+  <div class="value"><label for="people">Personen im Haushalt</label><output id="peopleOut">2</output></div>
+  <input id="people" type="range" min="1" max="8" step="1" value="2">
+  <div class="hint">1 bis 8 Personen</div>
+</div>
+<div class="field">
+  <div class="value"><label for="uses">Händewäschen p. P. / Tag</label><output id="usesOut">8</output></div>
+  <input id="uses" type="range" min="1" max="20" step="1" value="8">
+  <div class="hint">Durchschnittlicher täglicher Wert</div>
+</div>
+<div class="field info-field">
+  <div class="value"><span class="label-row"><label for="delta">Temperaturdifferenz</label><button class="info-btn" id="deltaInfoBtn" type="button">ⓘ</button></span><output id="deltaOut">45 °C</output></div>
+  <div class="info-pop" id="deltaInfo" hidden><button class="info-close" id="deltaInfoClose" type="button">×</button><p><strong>60 °C − 15 °C = 45 °C Temperaturdifferenz.</strong></p><p>Richtwert für zentrale Warmwasseranlagen zur Legionellen-Vorbeugung. Tatsächliche Werte können abweichen.</p></div>
+  <input id="delta" type="range" min="10" max="60" step="1" value="45">
+  <div class="hint">Differenz zwischen Kalt- und Warmwasser</div>
+</div>
+<div class="field">
+  <label for="source">Wie wird das Warmwasser erzeugt?</label>
+  <select id="source"><option value="electric" selected>Elektrischer Durchlauferhitzer</option><option value="gas">Erdgasheizung</option><option value="oil">Heizölheizung</option><option value="heatpump">Wärmepumpe</option><option value="district">Nah- / Fernwärme</option></select>
+  <div class="hint">Die Auswahl beeinflusst die CO₂-Schätzung.</div>
+</div>
+<div class="field hidden" id="jazField">
+  <div class="value"><label for="jaz">Jahresarbeitszahl (JAZ)</label><output id="jazOut">3,0</output></div>
+  <input id="jaz" type="range" min="1.5" max="5" step="0.1" value="3">
+  <div class="hint">Typischen Wert Ihrer Wärmepumpe verwenden.</div>
+</div>
+<div class="field">
+  <label for="price">Preis / kWh</label>
+  <div class="price-wrap"><input class="price" id="price" type="text" inputmode="decimal" value="0,30"><span>€</span></div>
+  <div class="hint" id="priceHint">Preis/kWh Ihres Stromtarifs inkl. aller Abgaben, Steuern und Gebühren</div>
+</div>
+</section>
+<button class="reset" id="reset" type="button">Auf Ausgangswerte zurücksetzen</button>
+<p class="note">Berechnungsannahmen: 1,25 l je Handwaschvorgang (10 Sek., 7,5 l/min), 1,16 Wh pro Liter und °C, 365 Tage/Jahr. Quellen: UBA (Strommix 2025: 344 g CO₂/kWh), BMWE (Brennstofffaktoren 2025), BAFA (Fernwärme 2025).</p>
+</main>
+<script>
+(()=>{
+const ids=['people','uses','delta'];
+const el=id=>document.getElementById(id);
+const fmt=(n,d=0)=>new Intl.NumberFormat('de-DE',{minimumFractionDigits:d,maximumFractionDigits:d}).format(n);
+function calc(){
+  const p=+el('people').value,u=+el('uses').value,t=+el('delta').value;
+  el('peopleOut').textContent=p;el('usesOut').textContent=u;el('deltaOut').textContent=t+' °C';
+  const litres=1.25*p*u*365;const kwh=litres*t*1.16/1000;
+  el('litres').textContent=fmt(litres)+' Liter';el('m3').textContent='Das entspricht '+fmt(litres/1000,2)+' m³';el('energy').textContent=fmt(kwh,2)+' kWh';
+  const source=el('source').value;const jaz=+el('jaz').value;let factor,detail,eff,tariff;
+  if(source==='gas'){eff=0.90;tariff='Ihres Erdgastarifs';factor=0.20088/0.90;detail='bei Erdgas (90 % Effizienz)';}
+  else if(source==='oil'){eff=0.90;tariff='Ihres Heizöls (je kWh)';factor=0.2664/0.90;detail='bei Heizöl (90 % Effizienz)';}
+  else if(source==='electric'){eff=1;tariff='Ihres Stromtarifs';factor=0.344;detail='bei deutschem Strommix 2025';}
+  else if(source==='heatpump'){eff=jaz;tariff='Ihres Wärmepumpen-Stromtarifs';factor=0.344/jaz;detail='bei Strommix 2025 & JAZ '+fmt(jaz,1);}
+  else{eff=1;tariff='Ihres Wärmetarifs';factor=0.280;detail='mit pauschalem Fernwärme-Faktor';}
+  const kg=kwh*factor;el('co2').textContent=fmt(kg,1)+' kg';el('co2Detail').textContent=detail;
+  el('jazOut').textContent=fmt(jaz,1);el('jazField').classList.toggle('hidden',source!=='heatpump');
+  const purchased=kwh/eff;const price=parseFloat(el('price').value.replace(/\s|€/g,'').replace(',','.'));
+  el('priceHint').textContent=source==='oil'?'1 Liter Öl = 10 kWh · Literpreis / 10 = Kosten pro kWh':'Preis/kWh '+tariff+' inkl. aller Abgaben';
+  if(price>=0&&isFinite(price)){el('cost').textContent=fmt(purchased*price,2)+' €';el('costDetail').textContent='bei '+fmt(price,price*100%1?3:2)+' €/kWh ('+fmt(purchased,0)+' kWh)';}
+  else{el('cost').textContent='– €';el('costDetail').textContent='Bitte kWh-Preis eingeben';}
+}
+const infoBtn=el('deltaInfoBtn'),infoPop=el('deltaInfo');
+const setInfo=open=>{infoPop.hidden=!open};
+infoBtn.addEventListener('click',()=>setInfo(infoPop.hidden));
+el('deltaInfoClose').addEventListener('click',()=>setInfo(false));
+ids.forEach(id=>el(id).addEventListener('input',calc));
+el('source').addEventListener('change',calc);el('jaz').addEventListener('input',calc);el('price').addEventListener('input',calc);
+el('reset').addEventListener('click',()=>{el('people').value=2;el('uses').value=8;el('delta').value=45;el('source').value='electric';el('jaz').value=3;el('price').value='0,30';calc()});
+calc();
+})();
+</script>
+</body>
+</html>
